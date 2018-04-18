@@ -55,21 +55,20 @@ Step 2: Prepare the pitch SD data from last year
 ```{r setup, include=FALSE}
 
 #group by ID summarise by mean within each participant to create a dataframe with only one datapoint per particiant
+#scaling the means
 
 
-newdf = group_by(dpd, ID, diagnosis, add = FALSE)
+newdf = group_by(dpd, ID_unique, add = FALSE) %>%
+  summarise(diagnosis = mean(diagnosis), PitchMean = mean(PitchMean), PitchSD = mean(PitchSD), PitchMedian = mean(PitchMedian), PitchRange = mean(PitchRange), PitchIQR = mean(PitchIQR), PitchMad = mean(PitchMad), PitchCV = mean(PitchCV)) %>%
+  mutate(sPitchMean = scale(PitchMean),
+sPitchSD = scale(PitchSD),
+sPitchMedian = scale(PitchMedian),
+sPitchRange = scale(PitchRange),
+sPitchIQR = scale(PitchIQR),
+sPitchMad = scale(PitchMad),
+sPitchCV = scale(PitchCV))
 
-newdf2 = summarise(newdf, PitchMean = mean(PitchMean), PitchSD = mean(PitchSD), PitchMedian = mean(PitchMedian), PitchRange = mean(PitchRange), PitchIQR = mean(PitchIQR), PitchMad = mean(PitchMad), PitchCV = mean(PitchCV))
 
-#create a dataframe with scaled values
-
-df = mutate(newdf2, sPitchMean = scale(newdf2$PitchMean),
-sPitchSD = scale(newdf2$PitchSD),
-sPitchMedian = scale(newdf2$PitchMedian),
-sPitchRange = scale(newdf2$PitchRange),
-sPitchIQR = scale(newdf2$PitchIQR),
-sPitchMad = scale(newdf2$PitchMad),
-sPitchCV = scale(newdf2$PitchCV))
 
 ```
 
@@ -82,6 +81,46 @@ Step 3: Build a regression model predicting Pitch SD from Diagnosis.
 
 ```{r setup, include=FALSE}
 
+"""
+PitchSD ~ normal(mu, sigma)
+
+mu = a + b * diagnosis
+a ~ depends on PitchSD - Standardize (mean of 0 and sd of 1) = normal(0,1)
+b ~ normal (0,2) optimistic
+sigma ~ cauchy(0,2) 
+log(sigma) =  alphasigma + betasigma * diagnosis
+
+m2 = brm(PitchSD|se(SdES)~1+(1|StudyID), data = newdf, core = 2, chains = 2, iter = 2000)
+pitchSD ~ 1 + Diagnosis (1 + Diagnosis[P])
+
+"""
+newdf = as.data.frame(newdf)
+
+
+m2 <- map2stan(
+  alist(
+  sPitchSD ~ dnorm( mu , sigma ) ,
+  mu <- a + b*diagnosis,
+  a ~ dnorm( 0 , 1 ) ,
+  b ~ dnorm( 0 , 1 ) ,
+  sigma ~ dcauchy( 0 , 2 )
+  ) ,
+  data= newdf, chains = 4, cores = 2, iter = 5000, warmup = 3000 )
+
+precis(m2)
+
+#using skepcital priors
+
+m3 <- map2stan(
+  alist(
+  sPitchSD ~ dnorm( mu , sigma ) ,
+  mu <- a + b*diagnosis,
+  a ~ dnorm( 0 , 1 ) ,
+  b ~ dnorm( 0 , 2 ) ,
+  sigma ~ dcauchy( 0 , 2 )
+  ) ,
+  data= newdf, chains = 4, cores = 2, iter = 5000, warmup = 3000 )
+
 
 ```
 
@@ -92,6 +131,26 @@ Step 4: Now re-run the model with the meta-analytic prior
 
 ```{r setup, include=FALSE}
 
+"""
+Int. -0.6
+Se(INT) 0.30 Std error = std dev divided of the sqrt of degrees of freedom 
+Sd(INT) 0.77 Std dev = sqrt of error of our data, so how much they vary
+Se(Sd(INT)) 0.29
+
+"""
+
+
+
+
+m3 <- map2stan(
+  alist(
+  sPitchSD ~ dnorm( mu , sigma ) ,
+  mu <- a + b*diagnosis,
+  a ~ dnorm( 0 , 1 ) ,
+  b ~ dnorm( -6 , 0.29 ) ,
+  sigma ~ dcauchy( 0 , 2 ) #meta-analysis doesnt provide further information, such as the alpha, so dont change sigma or alpha.
+  ) ,
+  data= newdf, chains = 4, cores = 2, iter = 5000, warmup = 3000)
 
 ```
 
