@@ -109,6 +109,7 @@ m2 <- map2stan(
 
 precis(m2)
 
+
 #using skepcital priors
 
 m3 <- map2stan(
@@ -120,6 +121,8 @@ m3 <- map2stan(
   sigma ~ dcauchy( 0 , 2 )
   ) ,
   data= newdf, chains = 4, cores = 2, iter = 5000, warmup = 3000 )
+
+precis(m3)
 
 
 ```
@@ -139,10 +142,7 @@ Se(Sd(INT)) 0.29
 
 """
 
-
-
-
-m3 <- map2stan(
+m4 <- map2stan(
   alist(
   sPitchSD ~ dnorm( mu , sigma ) ,
   mu <- a + b*diagnosis,
@@ -163,6 +163,19 @@ Step 5: Compare the models
 - Discuss how they compare and whether any of them is best.
 
 ```{r setup, include=FALSE}
+
+#skeptic priors
+post <- extract.samples( m3 )
+pairs(post)
+pairs(m3)
+show(m3)
+
+
+#meta-analytic priors
+post2 <- extract.samples( m4 )
+pairs(post2)
+pairs(m4)
+show(m4)
 
 
 ```
