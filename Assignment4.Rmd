@@ -109,6 +109,10 @@ m2 <- map2stan(
 
 precis(m2)
 
+plot(m2)
+
+#the trace plot show a good stationarity and mixing, meaning the chains are getting somewhat the same results, suggesting a healthy chain.
+
 
 #using skepcital priors
 
@@ -124,6 +128,9 @@ m3 <- map2stan(
 
 precis(m3)
 
+plot(m3)
+
+#still quite healthy chain with skeptical priors
 
 ```
 
@@ -152,6 +159,13 @@ m4 <- map2stan(
   ) ,
   data= newdf, chains = 4, cores = 2, iter = 5000, warmup = 3000)
 
+precis(m4)
+
+plot(m4)
+
+#still healthy chain
+
+
 ```
 
 
@@ -164,18 +178,40 @@ Step 5: Compare the models
 
 ```{r setup, include=FALSE}
 
-#skeptic priors
+#sceptic prior/posterior
+
+samples = extract.samples(m3, n =1e4)
+samples$bprior = rnorm(1e4, 0, 0.2)
+type= rep(c("posterior","prior"), each =1e4)
+value =c(t(samples$b), t(samples$bprior))
+d = data.frame(value, type)
+ggplot(d,aes(value,group =type)) +geom_density()
+
 post <- extract.samples( m3 )
 pairs(post)
 pairs(m3)
 show(m3)
 
 
-#meta-analytic priors
+
+#meta-analytic posterior
+
+samples = extract.samples(m4, n =1e4)
+samples$bprior = rnorm(1e4, 0, 0.2)
+type= rep(c("posterior","prior"), each =1e4)
+value =c(t(samples$b), t(samples$bprior))
+d = data.frame(value, type)
+ggplot(d,aes(value,group =type)) +geom_density()
+
+
 post2 <- extract.samples( m4 )
 pairs(post2)
 pairs(m4)
 show(m4)
+
+
+#compare
+compare(m3, m4)
 
 
 ```
