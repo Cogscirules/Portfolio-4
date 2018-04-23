@@ -120,8 +120,8 @@ m3 <- map2stan(
   alist(
   sPitchSD ~ dnorm( mu , sigma ) ,
   mu <- a + b*diagnosis,
-  a ~ dnorm( 0 , 1 ) ,
-  b ~ dnorm( 0 , 2 ) ,
+  a ~ dnorm( 0 , 0.5 ) ,
+  b ~ dnorm( 0 , 0.2 ) ,
   sigma ~ dcauchy( 0 , 2 )
   ) ,
   data= newdf, chains = 4, cores = 2, iter = 5000, warmup = 3000 )
@@ -185,7 +185,7 @@ samples$bprior = rnorm(1e4, 0, 0.2)
 type= rep(c("posterior","prior"), each =1e4)
 value =c(t(samples$b), t(samples$bprior))
 d = data.frame(value, type)
-ggplot(d,aes(value,group =type)) +geom_density()
+ggplot(d,aes(value,group =type, color = type)) +geom_density()+ggtitle("Sceptical Model")
 
 post <- extract.samples( m3 )
 pairs(post)
@@ -201,7 +201,7 @@ samples$bprior = rnorm(1e4, 0, 0.2)
 type= rep(c("posterior","prior"), each =1e4)
 value =c(t(samples$b), t(samples$bprior))
 d = data.frame(value, type)
-ggplot(d,aes(value,group =type)) +geom_density()
+ggplot(d,aes(value,group =type, color = type)) +geom_density()+ggtitle("Meta-analytic Model")
 
 
 post2 <- extract.samples( m4 )
