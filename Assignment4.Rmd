@@ -154,7 +154,7 @@ m4 <- map2stan(
   sPitchSD ~ dnorm( mu , sigma ) ,
   mu <- a + b*diagnosis,
   a ~ dnorm( 0 , 1 ) ,
-  b ~ dnorm( -6 , 0.29 ) ,
+  b ~ dnorm( -0.6 , 0.29 ) ,
   sigma ~ dcauchy( 0 , 2 ) #meta-analysis doesnt provide further information, such as the alpha, so dont change sigma or alpha.
   ) ,
   data= newdf, chains = 4, cores = 2, iter = 5000, warmup = 3000)
@@ -211,7 +211,9 @@ show(m4)
 
 
 #compare
-compare(m3, m4)
+compare(m2, m3, m4)
+plot(compare(m3,m4))
+
 
 
 ```
